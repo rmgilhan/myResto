@@ -2,21 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const Order = require('./Order');
-
-const reservationSchema = new Schema({
-    restaurantId: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: [true, 'Restaurant ID is required']
-    },
-    reservationDate: {
-        type: Date,
-        required: true
-    },
-    numberOfGuests: {
-        type: Number,
-        required: true
-    }
-});
+const Reservation = require('./Reservation');
 
 const customerSchema = new Schema({
     name: {
@@ -35,7 +21,10 @@ const customerSchema = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Order'
     }],
-    reservations: [reservationSchema]
+    reservations: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Reservation'
+    }]
 });
 
 const Customer = mongoose.model('Customer', customerSchema);

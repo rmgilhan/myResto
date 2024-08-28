@@ -4,26 +4,7 @@ const Schema = mongoose.Schema;
 
 // Import the Payment model (assuming it's in a file called Payment.js)
 const Payment = require('./Payment');  // Adjust the path as necessary
-
-// Define the OrderItem schema
-const orderItemSchema = new Schema({
-    menuItemId: {
-        type: Schema.Types.ObjectId,
-        required: [true, 'Menu ID is required']
-    },
-    name: {
-        type: String,
-        required: true
-    },
-    quantity: {
-        type: Number,
-        required: true
-    },
-    price: {
-        type: Number,
-        required: true
-    }
-});
+const OrderItem = require('./OrderItem')
 
 // Define the Order schema
 const orderSchema = new Schema({
@@ -39,7 +20,11 @@ const orderSchema = new Schema({
         type: Number,
         required: true
     },
-    items: [orderItemSchema],
+    items: [{
+        type: Schema.Types.ObjectId,
+        ref: 'OrderItem'
+        required: true
+    }],
     payment: {
         type: Schema.Types.ObjectId,
         ref: 'Payment',
