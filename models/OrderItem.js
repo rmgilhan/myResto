@@ -13,10 +13,6 @@ const orderItemSchema = new Schema({
         required: [true, 'Menu ID is required'],
         ref: 'MenuItem'
     },
-    name: {
-        type: String,
-        required: true
-    },
     quantity: {
         type: Number,
         required: true

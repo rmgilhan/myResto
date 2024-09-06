@@ -1,10 +1,17 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
+const Order = require('./Order');
+
 const paymentSchema = new Schema({
+    orderId : {
+        type: Schema.Types.ObjectId,
+        ref: 'Order',
+        required: true
+    },
     paymentDate: {
         type: Date,
-        required: true
+        default: Date.now
     },
     paymentAmount: {
         type: Number,
@@ -12,7 +19,9 @@ const paymentSchema = new Schema({
     },
     paymentMethod: {
         type: String,
-        required: true
+        required: true,
+        enum: ['Credit Card', 'Cash', 'PayPal', 'Bank Transfer'],  // Example payment methods
+        default: 'Cash'
     }
 });
 

@@ -4,14 +4,16 @@ const Schema = mongoose.Schema;
 // Import Menu and Employee models
 const Menu = require('./Menu');
 const Employee = require('./Employee');
+const Address = require('./Address');
 
 const restaurantSchema = new Schema({
     name: {
         type: String,
         required: true
     },
-    location: {
-        type: String,
+    address: {
+        type: Schema.Types.ObjectId,
+        ref: 'Address',
         required: true
     },
     phone: {

@@ -3,33 +3,46 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 // Import the Payment model (assuming it's in a file called Payment.js)
-const Payment = require('./Payment');  // Adjust the path as necessary
-const OrderItem = require('./OrderItem')
+const Restaurant = require('./Restaurant');
+const OrderItem = require('./OrderItem');
+const User = require('./User');
 
 // Define the Order schema
 const orderSchema = new Schema({
-    restaurantId: {
+    restaurantId: [{
         type: Schema.Types.ObjectId,
-        required: true
-    },
+        required: true,
+        ref: 'Restaurant'
+    }],
     orderDate: {
         type: Date,
-        required: true
+        default: Date.now
     },
+    customerId: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },    
+    items: [{
+        type: Schema.Types.ObjectId,
+        ref: 'OrderItem',
+        required: true
+    }],
     totalAmount: {
         type: Number,
         required: true
     },
-    items: [{
-        type: Schema.Types.ObjectId,
-        ref: 'OrderItem'
-        required: true
-    }],
+    orderType: {
+        type: String,
+        enum: ['Dine-In', 'Take-Out', 'Delivery'],
+        default: 'Dine-In'
+    },
     payment: {
-        type: Schema.Types.ObjectId,
-        ref: 'Payment',
-        required: true
-    }
+        type: String,
+        enum: ['Pending(Waiting for payment)', 'Completed'],
+        default: 'Pending(Waiting for payment)'
+    } 
+    
 });
 
 // Create the Order model from the schema

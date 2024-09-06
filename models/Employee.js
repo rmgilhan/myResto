@@ -1,17 +1,24 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-// Import Menu and Employee models
-const Menu = require('./Menu');
-const Employee = require('./Employee');
+const Address = require('./Address'); // Import the Address model
 
-const restaurantSchema = new Schema({
-    name: {
+const employeeSchema = new Schema({
+    firstName: {
         type: String,
         required: true
     },
-    location: {
+    lastName: {
         type: String,
+        required: true
+    },
+    position: {
+        type: String,
+        required: true
+    },
+    address:{
+        type: Schema.Types.ObjectId,
+        ref: 'Address',
         required: true
     },
     phone: {
@@ -22,15 +29,12 @@ const restaurantSchema = new Schema({
         type: String,
         required: true
     },
-    menus: [{
+    restaurant: {
         type: Schema.Types.ObjectId,
-        ref: 'Menu'
-    }],
-    employees: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Employee'
-    }]
+        ref: 'Restaurant',
+        required: true
+    }
 });
 
-const Restaurant = mongoose.model('Restaurant', restaurantSchema);
-module.exports = Restaurant;
+const Employee = mongoose.model('Employee', employeeSchema);
+module.exports = Employee;

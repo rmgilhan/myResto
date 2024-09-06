@@ -1,0 +1,8 @@
+myResto Application
+User			User Interface
+ - Customer	   - Menu, Order, Login/Logout, Review	
+ - Employee	   
+     - Cook	   - Order, Menu, Recipe
+     - Staff   	   - Menu, Payment
+     (Walk-in Customer)
+     - Manager	   - Menu, User, Recipe 
