@@ -8,9 +8,9 @@ const session = require('express-session');
 // Allows us to control the app's Cross Origin Resource Sharing settings
 const cors = require('cors');
 const userRoutes = require('./routes/user')
-const productRoutes = require('./routes/product')
-const cartRoutes = require('./routes/cart')
-const orderRoutes = require('./routes/order')
+//const productRoutes = require('./routes/product')
+// const cartRoutes = require('./routes/cart')
+// const orderRoutes = require('./routes/order')
 
 
 const app = express();
@@ -26,13 +26,13 @@ app.use(session({
 	saveUninitialized: false
 }));
 
-mongoose.connect("mongodb+srv://rmgilhan:t9eng@wdc028-course-booking.hdugpfx.mongodb.net/e-commerce-API?retryWrites=true&w=majority");
+mongoose.connect("mongodb+srv://rmgilhan:t9eng@wdc028-course-booking.hdugpfx.mongodb.net/myRestoBar?retryWrites=true&w=majority");
 mongoose.connection.once('open', () => console.log('Now connected to MongoDB Atlas.'));
 
-app.use("/b3/users",  userRoutes)
-app.use("/b3/products", productRoutes)
-app.use("/b3/cart", cartRoutes)
-app.use("/b3/order", orderRoutes)
+app.use("/resto/users",  userRoutes)
+// app.use("/b3/products", productRoutes)
+// app.use("/b3/cart", cartRoutes)
+// app.use("/b3/order", orderRoutes)
 
 
 
