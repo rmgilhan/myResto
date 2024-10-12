@@ -10,9 +10,9 @@ module.exports.registerUser = async(req, res) => {
     return res.status(406).json({ error: 'Invalid email' });
   }
 
-  // Check if mobileNo is at least 11 digits
-  if (phone.length === 11) {
-    return res.status(406).json({ error: 'Mobile number must be 11 digits' });
+  // Validate mobile number is exactly 11 digits
+  if (mobileNo.length !== 11) {
+    return res.status(406).json({ error: 'Mobile number must be exactly 11 digits' });
   }
 
   try {

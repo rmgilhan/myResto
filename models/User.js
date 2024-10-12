@@ -4,19 +4,25 @@ const Schema = mongoose.Schema;
 const userSchema = new Schema({
     firstName: {
         type: String,
-        required: true
+        required: [true, 'First name is required']
     },
     lastName: {
         type: String,
-        required: true
+        required: [true, 'Last name is required']
     },
     email: {
         type: String,
-        required: true
+        required: [true, 'Email is required'],
+        unique: true
     },
+    password : {
+		type : String,
+		required: [true, 'Password is required']
+	},
     mobileNo: {
         type: String,
-        required: true
+        required: [true, 'Mobile number is required'],
+		unique: true
     },
    isAdmin: {
         type: Boolean,
@@ -27,6 +33,11 @@ const userSchema = new Schema({
         type: Boolean,
         required: true,
         default: true
+   },
+   empPosition:{
+        type: String,
+        enum: ['Usher','Cook','Manager','Encoder','Order-staff'],
+        default: 'Usher'
    }
 });
 

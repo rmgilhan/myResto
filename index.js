@@ -14,7 +14,7 @@ const userRoutes = require('./routes/user')
 
 
 const app = express();
-const port = 4003;
+const port = 4000;
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
@@ -26,7 +26,7 @@ app.use(session({
 	saveUninitialized: false
 }));
 
-mongoose.connect("mongodb+srv://rmgilhan:t9eng@wdc028-course-booking.hdugpfx.mongodb.net/myRestoBar?retryWrites=true&w=majority");
+mongoose.connect("mongodb+srv://rmgilhan:t9eng@cluster0.tx2qodg.mongodb.net/myRestoBar?retryWrites=true&w=majority&appName=Cluster0");
 mongoose.connection.once('open', () => console.log('Now connected to MongoDB Atlas.'));
 
 app.use("/resto/users",  userRoutes)

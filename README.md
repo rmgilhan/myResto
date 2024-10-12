@@ -11,3 +11,14 @@ User			User Interface
 
     Manager	   
         - Menu, User, Employee, Recipe 
+
+Controller
+Menu
+- addMenu
+- updateMenu
+- deleteMenu
+- readMenu
+MenuItem
+- addMenuItem
+- updateMenuItem
+- deleteMenuItem
