@@ -26,7 +26,9 @@ app.use(session({
 	saveUninitialized: false
 }));
 
-mongoose.connect("mongodb+srv://rmgilhan:t9eng@cluster0.tx2qodg.mongodb.net/myRestoBar?retryWrites=true&w=majority&appName=Cluster0");
+//mongoose.connect("mongodb+srv://rmgilhan:t9eng@cluster0.tx2qodg.mongodb.net/myRestoBar?retryWrites=true&w=majority&appName=Cluster0");
+mongoose.connect("mongodb://localhost:27017/myRestoBar?retryWrites=true&w=majority&appName=Cluster0");
+
 mongoose.connection.once('open', () => console.log('Now connected to MongoDB Atlas.'));
 
 app.use("/resto/users",  userRoutes)

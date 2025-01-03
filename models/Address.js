@@ -4,25 +4,39 @@ const Schema = mongoose.Schema;
 const addressSchema = new Schema({
   street: {
     type: String,
-    required: true
+    required: [true, 'Street is required'],
+    trim: true
   },
   city: {
     type: String,
-    required: true
+    required: [true, 'City is required'],
+    trim: true
   },
-  province: {
+  stateOrProvince: {
     type: String,
-    required: true
+    required: [true, 'State or Province is required'],
+    trim: true
   },
   postalCode: {
     type: String,
-    required: true
+    required: [true, 'Postal Code is required'],
+    match: [/^\d{4,6}$/, 'Postal Code must be between 4 and 6 digits']
   },
   country: {
     type: String,
-    required: true
+    required: [true, 'Country is required'],
+    default: 'USA'
+  },
+  landmark: {
+    type: String,
+    trim: true // Optional field for additional details
   }
+}, {
+  timestamps: true // Automatically adds createdAt and updatedAt fields
 });
+
+// Add index for city and postalCode
+addressSchema.index({ city: 1, postalCode: 1 });
 
 const Address = mongoose.model('Address', addressSchema);
 module.exports = Address;
