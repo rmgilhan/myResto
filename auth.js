@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const secret = "eRestoAPI";
+const secret = process.env.SESSION_SECRET || "eRestoAPI";
 // [Section] JSON Web Tokens
 /*
 - JSON Web Token or JWT is a way of securely passing information from the server to the client or to other parts of a server
@@ -11,15 +11,17 @@ const secret = "eRestoAPI";
 - This ensures that the data is secure from the sender to the receiver
 */
 
+
 module.exports.createAccessToken = (user) => {
 	// const secret = process.env.SESSION_SECRET;
 	const data = {
 		id : user._id,
 		email : user.email,
-		isAdmin : user.isAdmin
+		isAdmin : user.isAdmin,
+		roles : user.roles
 	};
 
-	return jwt.sign(data, secret, {});
+	return jwt.sign(data, secret, { expiresIn: '1h' });
 };
 
 //[SECTION] Token Verification
@@ -81,3 +83,31 @@ module.exports.isLoggedIn = (req, res, next) => {
 		res.sendStatus(401);
 	}
 }
+
+/*
+- Added verifyRole function to cater on accessing on menu with add/update power 
+ 
+ Define Role-Specific Permissions:
+- Manager: Can access everything (Users, Menus, Orders, etc.)
+- Encoder: Can access only Menus (Add, Update, Delete)
+- Feb 04, 2025
+*/
+
+module.exports.verifyRole = (allowedRoles) => {
+    return (req, res, next) => {
+        console.log("User roles:", req.user.roles); 
+        console.log("Allowed roles:", allowedRoles);
+
+        if (!req.user || !req.user.roles || !Array.isArray(req.user.roles)) {
+            return res.status(403).json({ message: "Unauthorized access." });
+        }
+
+        const hasRole = req.user.roles.some(role => allowedRoles.includes(role));
+
+        if (!hasRole) {
+            return res.status(403).json({ message: "Unauthorized access." });
+        }
+
+        next();
+    };
+};

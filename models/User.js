@@ -17,20 +17,29 @@ const userSchema = new Schema({
         unique: true,
         index: true
     },
-    password: {
-        type: String,
-        required: [true, 'Password is required']
-    },
-    mobileNo: {
+     mobileNo: {
         type: String,
         required: [true, 'Mobile number is required'],
         unique: true,
         index: true
     },
+    password: {
+        type: String,
+        required: [true, 'Password is required']
+    },
+    restaurant: {
+        type: Schema.Types.ObjectId,
+        ref: 'Restaurant'
+    },
     roles: {
         type: [String],
-        enum: ['Admin', 'Customer', 'Usher', 'Cook', 'Manager', 'Encoder', 'Order-staff'],
+        enum: ['Admin','Customer', 'Usher', 'Cook', 'Manager', 'Encoder', 'Order-staff'],
         default: ['Customer']
+    },
+    isAdmin: {
+        type: Boolean,
+        default: false
+
     },
     empPosition: {
         type: String,
@@ -43,13 +52,24 @@ const userSchema = new Schema({
             },
             message: 'Employee position can only be assigned to non-customers'
         }
-    }
+    },
+    orders: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Order'
+    }],
+    reservations: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Reservation'
+    }],
 }, {
     timestamps: true // Adds createdAt and updatedAt fields
 });
 
 // Pre-save middleware for hashing passwords
 userSchema.pre('save', async function (next) {
+
+    this.isAdmin = this.roles.includes('Admin'); // Auto-sync isAdmin based on roles
+
     if (!this.isModified('password')) return next();
     try {
         const salt = await bcrypt.genSalt(10);
@@ -62,8 +82,13 @@ userSchema.pre('save', async function (next) {
 
 // Method to compare passwords
 userSchema.methods.comparePassword = async function (candidatePassword) {
-    return bcrypt.compare(candidatePassword, this.password);
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (error) {
+    throw new Error("Error comparing passwords");
+  }
 };
+
 
 // Create the User model
 const User = mongoose.model('User', userSchema);

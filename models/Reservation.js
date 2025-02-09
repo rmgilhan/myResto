@@ -2,17 +2,21 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const reservationSchema = new Schema({
-    restaurantId: {
+    restaurant: {
         type: Schema.Types.ObjectId,
-        ref: 'Restaurant', // Ensures reference to the Restaurant model
-        required: [true, 'Restaurant ID is required']
+        ref: 'Restaurant', // Reference to Restaurant
+        required: true
+    },
+    customer: {
+        type: Schema.Types.ObjectId,
+        ref: 'Customer', // Reference to Customer
+        required: true
     },
     reservationDate: {
         type: Date,
-        required: [true, 'Reservation date is required'],
+        required: true,
         validate: {
             validator: function (value) {
-                // Ensure reservation is not in the past
                 return value >= new Date();
             },
             message: 'Reservation date must be in the future'
@@ -20,33 +24,19 @@ const reservationSchema = new Schema({
     },
     numberOfGuests: {
         type: Number,
-        required: [true, 'Number of guests is required'],
+        required: true,
         min: [1, 'There must be at least one guest']
     },
-    customerName: {
+    status: {
         type: String,
-        required: [true, 'Customer name is required']
-    },
-    customerContact: {
-        type: String,
-        required: [true, 'Customer contact information is required'],
-        validate: {
-            validator: function (value) {
-                // Simple regex for phone number validation
-                return /^[0-9]{10,15}$/.test(value);
-            },
-            message: 'Invalid contact number format'
-        }
+        enum: ['Pending', 'Confirmed', 'Cancelled'], // Reservation status
+        default: 'Pending'
     },
     specialRequests: {
-        type: String,
-        default: ''
+        type: [String], // Allow multiple requests
+        default: []
     }
-}, {
-    timestamps: true // Automatically adds createdAt and updatedAt fields
-});
+}, { timestamps: true });
 
-// Create the Reservation model
 const Reservation = mongoose.model('Reservation', reservationSchema);
-
 module.exports = Reservation;

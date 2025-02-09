@@ -7,14 +7,16 @@ const session = require('express-session');
 // Allows our backend application to be available to our frontend application
 // Allows us to control the app's Cross Origin Resource Sharing settings
 const cors = require('cors');
-const userRoutes = require('./routes/user')
-//const productRoutes = require('./routes/product')
+const userRoutes = require('./routes/user');
+const menuRoutes = require('./routes/menu');
+const restaurantRoutes = require('./routes/restaurant');
+
 // const cartRoutes = require('./routes/cart')
 // const orderRoutes = require('./routes/order')
 
 
 const app = express();
-const port = 4000;
+const port = 4005;
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
@@ -31,8 +33,9 @@ mongoose.connect("mongodb://localhost:27017/myRestoBar?retryWrites=true&w=majori
 
 mongoose.connection.once('open', () => console.log('Now connected to MongoDB Atlas.'));
 
-app.use("/resto/users",  userRoutes)
-// app.use("/b3/products", productRoutes)
+app.use("/resto/users",  userRoutes);
+app.use("/resto/menus", menuRoutes);
+app.use("/resto/restoBuild", restaurantRoutes);
 // app.use("/b3/cart", cartRoutes)
 // app.use("/b3/order", orderRoutes)
 

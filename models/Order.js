@@ -4,12 +4,6 @@ const Schema = mongoose.Schema;
 
 // Define the Order schema
 const orderSchema = new Schema({
-    restaurantId: {
-        type: Schema.Types.ObjectId,
-        required: true,
-        ref: 'Restaurant',
-        index: true
-    },
     orderOn: {
         type: Date,
         default: Date.now

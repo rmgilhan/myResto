@@ -35,15 +35,7 @@ const restaurantSchema = new Schema({
         },
         unique: true,
         index: true
-    },
-    menus: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Menu'
-    }],
-    employees: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Employee'
-    }]
+    }
 }, {
     timestamps: true // Automatically add createdAt and updatedAt fields
 });
@@ -52,12 +44,22 @@ const restaurantSchema = new Schema({
 restaurantSchema.pre('remove', async function (next) {
     try {
         // Remove associated menus and employees
+        await Address.findByIdAndDelete(this.address);
         await mongoose.model('Menu').deleteMany({ restaurant: this._id });
-        await mongoose.model('Employee').deleteMany({ restaurant: this._id });
+        await mongoose.model('User').deleteMany({ restaurant: this._id });
         next();
     } catch (error) {
         next(error);
     }
+});
+
+// Pre-save hook to prevent multiple restaurants
+restaurantSchema.pre('save', async function (next) {
+  const existingRestaurant = await mongoose.model('Restaurant').countDocuments();
+  if (existingRestaurant > 0) {
+    return next(new Error('Only one restaurant can exist.'));
+  }
+  next();
 });
 
 // Create the Restaurant model

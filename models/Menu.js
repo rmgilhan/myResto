@@ -1,10 +1,12 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-// Import MenuItem model
-const MenuItem = require('./MenuItem');
-
 const menuSchema = new Schema({
+    restaurant: {
+        type: Schema.Types.ObjectId,
+        ref: 'Restaurant',
+        required: true
+    },
     name: {
         type: String,
         required: [true, 'Menu name is required'],
@@ -31,8 +33,21 @@ const menuSchema = new Schema({
 
 // Validator function to ensure the items array is not empty
 function arrayLimit(val) {
-    return val.length > 0;
+    return Array.isArray(val) && val.length > 0;
 }
+
+menuSchema.pre('deleteOne', { document: true }, async function(next) {
+    try {
+        // Delete all MenuItems that belong to this Menu
+        await mongoose.model('MenuItem').deleteMany({ menu: this._id });
+        next();
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Optional: Add an index for better performance when filtering active menus
+menuSchema.index({ isActive: 1 });
 
 // Create the Menu model
 const Menu = mongoose.model('Menu', menuSchema);

@@ -26,10 +26,6 @@ const addressSchema = new Schema({
     type: String,
     required: [true, 'Country is required'],
     default: 'USA'
-  },
-  landmark: {
-    type: String,
-    trim: true // Optional field for additional details
   }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields

@@ -1,195 +1,188 @@
-const bcrypt = require('bcrypt');
-const User = require ("../models/User");
+const bcrypt = require("bcrypt");
+const Joi = require("joi");
+const User = require("../models/User");
+const Restaurant = require("../models/Restaurant");
 const auth = require("../auth");
 
-module.exports.registerUser = async(req, res) => {
-    const { firstName, lastName, email, mobileNo } = req.body;
-    // Check if email is in valid format
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return res.status(406).json({ error: 'Invalid email' });
-  }
+// Validation Schemas
+const userRegisterSchema = Joi.object({
+  firstName: Joi.string().min(2).required(),
+  lastName: Joi.string().min(2).required(),
+  email: Joi.string().email().required(),
+  mobileNo: Joi.string().pattern(/^\d{11}$/).required(),
+  password: Joi.string().min(8).required(),
+});
 
-  // Validate mobile number is exactly 11 digits
-  if (mobileNo.length !== 11) {
-    return res.status(406).json({ error: 'Mobile number must be exactly 11 digits' });
-  }
+const userLoginSchema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().required(),
+});
 
+const passwordUpdateSchema = Joi.object({
+  currentPassword: Joi.string().required(),
+  newPassword: Joi.string().min(8).required(),
+});
+
+// Register User
+module.exports.registerUser = async (req, res) => {
   try {
-    // Check if user already exists
+    // Validate input
+    const { error, value } = userRegisterSchema.validate(req.body);
+    if (error) return res.status(400).json({ error: error.details[0].message });
+
+    const { firstName, lastName, email, mobileNo, password } = value;
+
+    // Check for existing user
     const existingUser = await User.findOne({ $or: [{ email }, { mobileNo }] });
-    if (existingUser) {
-      return res.status(400).json({ error: 'User with this email or mobile number already exists' });
+    if (existingUser) return res.status(400).json({ error: "Email or mobile number already exists." });
+
+    // Get the first restaurant ID
+    const restaurant = await Restaurant.findOne().select('_id').lean();
+    let newUser;
+
+    if (!restaurant) {
+      newUser = new User({ 
+          firstName, 
+          lastName, 
+          email, 
+          mobileNo, 
+          password, 
+          restaurant: null, 
+          roles: ['Admin'],  // Use array for roles
+          isAdmin: true 
+      });
+    } else {
+      newUser = new User({ 
+          firstName, 
+          lastName, 
+          email, 
+          mobileNo, 
+          password, 
+          restaurant: restaurant._id // Assign only the ID
+      });
     }
+    // Create and save user
+    
+    await newUser.save();
 
-    // Create new user
-    const newUser = new User({
-      firstName,
-      lastName,
-      email,
-      mobileNo,
-      password: bcrypt.hashSync(req.body.password, 10)
-    });
-    return newUser.save()
-        .then((result) => res.status(201).send({message: 'Registered Successfully'}))
-        .catch(err =>{
-        console.log('Error in Save', err)
-        return res.status(500).send({error: 'Error in Save'});
-              })
-
-    // await newUser.save();
-    // return res.status(201).json.send (newUser);
+    return res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
-    console.error('Error registering user:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error("Error registering user:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
-
-}
-module.exports.loginUser = (req, res) => {
-	
-	if(req.body.email.includes("@")){
-		return User.findOne({ email : req.body.email}).then(result => {
-		if(result == null) {
-			return res.status(404).send({error: "No email found"});
-		}else{
-			const isPasswordCorrect = bcrypt.compareSync(req.body.password, result.password);
-			if(isPasswordCorrect){
-				
-				return res.status(200).send({ access : auth.createAccessToken(result)});
-			}else{
-				return res.status(401).send({error: "Email and password do not match."});
-			}
-		}
-	})
-	.catch(err =>{
-        		console.log('Error in find', err);
-        		return res.status(500).send({error: 'Error in find'});
-            	})
-}else{
-	return res.status(406).send({error: 'Invalid in email'});
-}
-	
 };
 
-module.exports.getProfile = (req, res) => {
-    const userId = req.user.id;
+// Login User
+module.exports.loginUser = async (req, res) => {
+  try {
+    const { error, value } = userLoginSchema.validate(req.body);
+    if (error) return res.status(400).json({ error: error.details[0].message });
 
-    User.findById(userId)
-    .then(user => {
-        if (!user) {
-            return res.status(404).send({ error: 'User not found' });
-        }
+    const { email, password } = value;
 
-        // Exclude sensitive information like password
-        user.password = undefined;
+    console.log(password);
 
-        return res.status(200).send({ user });
-    })
-    .catch(err => {
-        console.error("Error in fetching user profile", err)
-        return res.status(500).send({ error: 'Failed to fetch user profile' });
-    });
-}
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: "Email not found." });
 
+    console.log(user.password);
+
+    //const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await user.comparePassword(password);
+
+    if (!isPasswordValid) return res.status(401).json({ error: "Invalid email or password." });
+
+    const accessToken = auth.createAccessToken(user);
+    return res.status(200).json({ message: "Login successful", accessToken });
+  } catch (error) {
+    console.error("Error logging in:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Get User Profile
+module.exports.getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) return res.status(404).json({ error: "User not found." });
+
+    return res.status(200).json({ user });
+  } catch (error) {
+    console.error("Error fetching profile:", error);
+    return res.status(500).json({ error: "Failed to fetch user profile." });
+  }
+};
+
+// Set User as Admin
 module.exports.setAsAdmin = async (req, res) => {
+  try {
+    if (!req.user.isAdmin) return res.status(403).json({ message: "Unauthorized." });
+
     const { id } = req.params;
-    
-    try {
-
-    // Check if the user making the request is an admin
-    if (!req.user.isAdmin) {
-        return res.status(403).json({ message: "Unauthorized" });
-    }
-
-    // Find the user by id and update isAdmin status
     const user = await User.findById(id);
-
-    if (!user) {
-        return res.status(404).json({ message: "User not found" });
-    }
-
-    // Check if the user to be made admin is already an admin
-    if (user.isAdmin) {
-        return res.status(400).json({ message: "User is already an admin." });
-    }
+    if (!user) return res.status(404).json({ message: "User not found." });
+    if (user.isAdmin) return res.status(400).json({ message: "User is already an admin." });
 
     user.isAdmin = true;
     await user.save();
 
-    return res.status(200).json({ message: "User successfully set as admin" });
-    
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: "Internal Server Error" });
-    }
+    return res.status(200).json({ message: "User successfully set as admin." });
+  } catch (error) {
+    console.error("Error setting admin status:", error);
+    return res.status(500).json({ message: "Internal server error." });
+  }
 };
 
-
+// Update Password
 module.exports.updatePassword = async (req, res) => {
-    try {
-        const { currentPassword, newPassword } = req.body;
-        const { id } = req.user; // Extracting user ID
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        // Find the user by userId
-        const userToUpdate = await User.findById(id);
+  try {
+    const { error, value } = passwordUpdateSchema.validate(req.body);
+    if (error) return res.status(400).json({ error: error.details[0].message });
 
-        if (!userToUpdate) {
-            return res.status(404).json({ message: "User not found" });
-        }
-        //check current password on dbase vs password encoded
+    const { currentPassword, newPassword } = value;
+    const user = await User.findById(req.user.id);
 
-        bcrypt.compare(currentPassword, userToUpdate.password, (err, result) =>{
+    if (!user) return res.status(404).json({ message: "User not found." });
 
-        if (err){
-            return res.status(400).send({error: 'Error in find'});
-        } 
-        if (result){
-            console.log('Password match');
-            userToUpdate.password = hashedPassword;
-            userToUpdate.save();
-            return res.status(200).json({message: 'Password updated Successfully', updatedUser : userToUpdate});
-        }else{
-            return res.status(401).send('Current password did not match. Try again!');
-        }
-    })
-    } catch (error){
-        console.error(error);
-        return res.status(500).json({message: 'Internal server error'});
-    }
-}
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordValid) return res.status(401).json({ message: "Current password is incorrect." });
 
-module.exports.getAllUsers = async (req, res) => {
-    try {
-        const users = await User.find({});
-        res.status(200).json(users);
-    } catch (err) {
-        console.error('Failed to fetch users', err);
-        res.status(500).json({ error: 'Failed to fetch users' });
-    }
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    return res.status(200).json({ message: "Password updated successfully." });
+  } catch (error) {
+    console.error("Error updating password:", error);
+    return res.status(500).json({ message: "Internal server error." });
+  }
 };
 
+// Get All Users
+module.exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({}).select("-password");
+    return res.status(200).json(users);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return res.status(500).json({ error: "Failed to fetch users." });
+  }
+};
 
-// Added 5/29/20224 (For Update profile)
+// Update Profile
 module.exports.updateProfile = async (req, res) => {
-    const { firstName, lastName, mobileNumber } = req.body;
-    const userId = req.user.id; // Assuming you have middleware to extract user from JWT
+  try {
+    const { firstName, lastName, mobileNo } = req.body;
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      { firstName, lastName, mobileNo },
+      { new: true, runValidators: true }
+    ).select("-password");
 
-    try {
+    if (!updatedUser) return res.status(404).json({ message: "User not found." });
 
-    // Update user document
-        const updatedUser = await User.findByIdAndUpdate(
-        userId,
-        { firstName, lastName, mobileNumber },
-        { new: true }
-        );
-
-        if (!updatedUser) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        return res.status(200).json({ message: 'Profile updated successfully', user: updatedUser });
-    } catch (error) {
-        console.error('Error updating profile:', error);
-        return res.status(500).json({ message: 'Failed to update profile' });
-    }
+    return res.status(200).json({ message: "Profile updated successfully.", user: updatedUser });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    return res.status(500).json({ message: "Failed to update profile." });
+  }
 };
