@@ -1,11 +1,13 @@
 const mongoose = require("mongoose");
 const Menu = require("../models/Menu");
 const MenuItem = require("../models/MenuItem");
+const Restaurant = require("../models/Restaurant");
 
 module.exports.addMenu = async (req, res) => {
 
     if (!req.user.isAdmin) return res.status(403).json({ message: "Unauthorized." });
 
+    const resto = await Restaurant.findOne().select('_id').lean();
     const { menuName, name, description, price } = req.body;
 
     if (!name || typeof name !== "string" || name.trim() === "") {
@@ -23,6 +25,7 @@ module.exports.addMenu = async (req, res) => {
           console.log(`Menu "${menuName}" not found. Creating new menu.`);
     
           const newMenu = new Menu({ 
+              restaurant : resto._id,
               name: menuName, 
               description: "Auto-created category", 
               items: [] 
@@ -127,12 +130,23 @@ module.exports.deleteMenuItem = async (req, res) => {
 
 module.exports.getMenuItem = async(req, res) => {
 
-  const listMenuItem = await MenuItem.find({}).select({name: 1, description: 1, price: 1});
+  const listMenu = await Menu.find({})
+      .populate({
+        path: "restaurant",
+        select: "name address -_id", // ✅ Select name and address fields
+        populate: {
+          path: "address", // ✅ Populate address from Address collection
+          select: "street city stateOrProvince postalCode country -_id" // ✅ Select only specific address fields
+        }
+      })
+      .populate("items", "name price description -_id") // ✅ Populate menu items
+      .select("name description -_id"); // ✅ Select menu name & description
 
-  if (!listMenuItem){
+
+  if (!listMenu){
     return res.status(200).json({message: "No menu item available."});
   } else {
-    return res.status(200).json(listMenuItem);
+    return res.status(200).json(listMenu);
   }
 
 }  
