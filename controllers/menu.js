@@ -130,23 +130,38 @@ module.exports.deleteMenuItem = async (req, res) => {
 
 module.exports.getMenuItem = async(req, res) => {
 
-  const listMenu = await Menu.find({})
-      .populate({
-        path: "restaurant",
-        select: "name address -_id", // ✅ Select name and address fields
-        populate: {
-          path: "address", // ✅ Populate address from Address collection
-          select: "street city stateOrProvince postalCode country -_id" // ✅ Select only specific address fields
-        }
-      })
-      .populate("items", "name price description -_id") // ✅ Populate menu items
-      .select("name description -_id"); // ✅ Select menu name & description
+const resto = await Restaurant.findOne().select('_id').lean();
+// Step 1: Fetch the restaurant details once
+const restaurantData = await Restaurant.findOne({ _id: resto._id }) // Use the correct filter
+  .select("name address -_id")
+  .populate({
+    path: "address",
+    select: "street city stateOrProvince postalCode country -_id"
+  })
+  .lean();
+
+// Step 2: Fetch the menu and related items
+const menuList = await Menu.find({ restaurant: resto._id }) // Get all menus for this restaurant
+  .select("name description -_id")
+  .populate({
+    path: "items",
+    select: "name price description -_id"
+  })
+  .lean();
 
 
-  if (!listMenu){
+  if (!menuList){
     return res.status(200).json({message: "No menu item available."});
   } else {
-    return res.status(200).json(listMenu);
+    // Step 3: Combine data in the expected format
+    const response = {
+      restaurant: restaurantData,
+      menus: menuList
+    };
+
+    // Step 4: Send the structured response
+    //console.log(response);
+    return res.status(200).json(response);
   }
 
 }  
