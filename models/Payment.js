@@ -8,10 +8,6 @@ const paymentSchema = new Schema({
         required: [true, 'Order ID is required'],
         index: true // Optimizes queries by orderId
     },
-    date: {
-        type: Date,
-        default: Date.now
-    },
     amount: {
         type: Number,
         required: [true, 'Payment amount is required'],

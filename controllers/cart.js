@@ -82,7 +82,7 @@ module.exports.updateCart = async(req, res) => {
 
     res.status(200).json(updatedCart);
   } catch (error) {
-    console.error("❌ Error updating cart:", error);
+    console.error("Error updating cart:", error);
     res.status(500).json({ message: "Failed to update cart", error: error.message });
   }
 
@@ -93,7 +93,7 @@ module.exports.getCart = async(req,res) => {
 	const userCart = await Cart.findOne({userId : req.user.id});
 	try {
 		if (!userCart) {
-			return res.status(400).json({message: "User has no menu selected in the Cart. Try to select our delicious menus!"});
+			return res.status(400).json({message: "User has not yet menu selected. Try to select our delicious menus!"});
 		} else {
 			return res.status(201).json({message: "Customer selected menus", userCart});
 		}

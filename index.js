@@ -12,7 +12,7 @@ const menuRoutes = require('./routes/menu');
 const restaurantRoutes = require('./routes/restaurant');
 
 const cartRoutes = require('./routes/cart');
-// const orderRoutes = require('./routes/order')
+const orderRoutes = require('./routes/order')
 
 
 const app = express();
@@ -37,7 +37,7 @@ app.use("/resto/users",  userRoutes);
 app.use("/resto/menus", menuRoutes);
 app.use("/resto/restoBuild", restaurantRoutes);
 app.use("/resto/cart", cartRoutes);
-// app.use("/b3/order", orderRoutes)
+app.use("/resto/order", orderRoutes)
 
 
 
