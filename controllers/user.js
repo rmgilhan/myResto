@@ -80,12 +80,8 @@ module.exports.loginUser = async (req, res) => {
 
     const { email, password } = value;
 
-    console.log(password);
-
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: "Email not found." });
-
-    console.log(user.password);
 
     //const isPasswordValid = await bcrypt.compare(password, user.password);
     const isPasswordValid = await user.comparePassword(password);
@@ -95,7 +91,6 @@ module.exports.loginUser = async (req, res) => {
     const accessToken = auth.createAccessToken(user);
     return res.status(200).json({ message: "Login successful", accessToken });
   } catch (error) {
-    console.error("Error logging in:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -108,7 +103,6 @@ module.exports.getProfile = async (req, res) => {
 
     return res.status(200).json({ user });
   } catch (error) {
-    console.error("Error fetching profile:", error);
     return res.status(500).json({ error: "Failed to fetch user profile." });
   }
 };
@@ -128,7 +122,6 @@ module.exports.setAsAdmin = async (req, res) => {
 
     return res.status(200).json({ message: "User successfully set as admin." });
   } catch (error) {
-    console.error("Error setting admin status:", error);
     return res.status(500).json({ message: "Internal server error." });
   }
 };
@@ -152,7 +145,6 @@ module.exports.updatePassword = async (req, res) => {
 
     return res.status(200).json({ message: "Password updated successfully." });
   } catch (error) {
-    console.error("Error updating password:", error);
     return res.status(500).json({ message: "Internal server error." });
   }
 };
@@ -163,7 +155,6 @@ module.exports.getAllUsers = async (req, res) => {
     const users = await User.find({}).select("-password");
     return res.status(200).json(users);
   } catch (error) {
-    console.error("Error fetching users:", error);
     return res.status(500).json({ error: "Failed to fetch users." });
   }
 };
@@ -182,7 +173,6 @@ module.exports.updateProfile = async (req, res) => {
 
     return res.status(200).json({ message: "Profile updated successfully.", user: updatedUser });
   } catch (error) {
-    console.error("Error updating profile:", error);
     return res.status(500).json({ message: "Failed to update profile." });
   }
 };

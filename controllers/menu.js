@@ -22,8 +22,7 @@ module.exports.addMenu = async (req, res) => {
 
         if (!menu) {
             //return res.status(404).json({ message: "Menu category not found." });
-          console.log(`Menu "${menuName}" not found. Creating new menu.`);
-    
+          
           const newMenu = new Menu({ 
               restaurant : resto._id,
               name: menuName, 
@@ -56,7 +55,6 @@ module.exports.addMenu = async (req, res) => {
             return res.status(201).json({message: "MenuItem is already in the database."});
             
     } catch (error) {
-        console.error("Error updating menu:", error);
         return res.status(500).json({ message: "Failed to update menu", error: error.message });
     }
 };
@@ -130,39 +128,39 @@ module.exports.deleteMenuItem = async (req, res) => {
 
 module.exports.getMenuItem = async(req, res) => {
 
-const resto = await Restaurant.findOne().select('_id').lean();
-// Step 1: Fetch the restaurant details once
-const restaurantData = await Restaurant.findOne({ _id: resto._id }) // Use the correct filter
-  .select("name address -_id")
-  .populate({
-    path: "address",
-    select: "street city stateOrProvince postalCode country -_id"
-  })
-  .lean();
+    const resto = await Restaurant.findOne().select('_id').lean();
+    // Step 1: Fetch the restaurant details once
+    const restaurantData = await Restaurant.findOne({ _id: resto._id }) // Use the correct filter
+      .select("name address -_id")
+      .populate({
+        path: "address",
+        select: "street city stateOrProvince postalCode country -_id"
+      })
+      .lean();
 
-// Step 2: Fetch the menu and related items
-const menuList = await Menu.find({ restaurant: resto._id }) // Get all menus for this restaurant
-  .select("name description -_id")
-  .populate({
-    path: "items",
-    select: "_id name price description"
-  })
-  .lean();
+    // Step 2: Fetch the menu and related items
+    const menuList = await Menu.find({ restaurant: resto._id }) // Get all menus for this restaurant
+      .select("name description -_id")
+      .populate({
+        path: "items",
+        select: "_id name price description"
+      })
+      .lean();
 
 
-  if (!menuList){
-    return res.status(200).json({message: "No menu item available."});
-  } else {
-    // Step 3: Combine data in the expected format
-    const response = {
-      restaurant: restaurantData,
-      menus: menuList
-    };
+      if (!menuList){
+        return res.status(200).json({message: "No menu item available."});
+      } else {
+        // Step 3: Combine data in the expected format
+        const response = {
+          restaurant: restaurantData,
+          menus: menuList
+        };
 
-    // Step 4: Send the structured response
-    //console.log(response);
-    return res.status(200).json(response);
-  }
+        // Step 4: Send the structured response
+        //console.log(response);
+        return res.status(200).json(response);
+      }
 
 }  
 // Add Menu Item

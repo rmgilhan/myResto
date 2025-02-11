@@ -33,16 +33,16 @@ module.exports.createAccessToken = (user) => {
 */
 
 module.exports.verify = (req, res, next) => {
-	console.log(req.headers.authorization);
+	//console.log(req.headers.authorization);
 
 	let token = req.headers.authorization;
 
 	if(typeof token === "undefined"){
 		return res.send({auth: "Failed. No Token"});
 	}else{
-		console.log(token);
+		//console.log(token);
 		token = token.slice(7, token.length);
-		console.log(token);
+		//console.log(token);
 //[SECTION] Token decryption
 /*
 	Analogy
@@ -58,8 +58,8 @@ module.exports.verify = (req, res, next) => {
 			if(err){
 				return res.send({auth: "Failed", message: err.message});
 			}else{
-				console.log("result from verify method:")
-				console.log(decodedToken);
+				//console.log("result from verify method:")
+				//console.log(decodedToken);
 				req.user = decodedToken;
 				next();
 			}
@@ -68,8 +68,8 @@ module.exports.verify = (req, res, next) => {
 }
 
 module.exports.verifyAdmin = (req, res, next) => {
-	console.log("result from verifyAdmin");
-	console.log(req.user);
+	//console.log("result from verifyAdmin");
+	//console.log(req.user);
 	if(req.user.isAdmin){
 		next();
 	}else{
@@ -96,8 +96,8 @@ module.exports.isLoggedIn = (req, res, next) => {
 
 module.exports.verifyRole = (allowedRoles) => {
     return (req, res, next) => {
-        console.log("User roles:", req.user.roles); 
-        console.log("Allowed roles:", allowedRoles);
+        //console.log("User roles:", req.user.roles); 
+        //console.log("Allowed roles:", allowedRoles);
 
         if (!req.user || !req.user.roles || !Array.isArray(req.user.roles)) {
             return res.status(403).json({ message: "Unauthorized access." });

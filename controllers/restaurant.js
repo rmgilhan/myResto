@@ -68,7 +68,6 @@ module.exports.addRestaurant = async (req, res) => {
       return res.status(409).json({ message: "Restaurant already exists in the database" });
     }
   } catch (error) {
-    console.error("Error creating restaurant:", error);
     return res.status(500).json({ error: "Internal server error." });
   }
 };
@@ -92,7 +91,6 @@ module.exports.updateRestaurant = async (req, res) => {
   try {
     // Find restaurant by ID
     
-    console.log(restoId);
     const restaurant = await Restaurant.findById(restoId).populate("address");
     
     if (!restaurant) {
@@ -128,7 +126,6 @@ module.exports.updateRestaurant = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error updating restaurant:", error);
     return res.status(500).json({ error: "Internal server error." });
   }
 }
@@ -143,7 +140,6 @@ module.exports.deleteRestaurant = async (req, res) => {
 
     res.status(200).json({ message: "Restaurant and associated address deleted successfully." });
   } catch (error) {
-    console.error("Error deleting restaurant:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };

@@ -10,13 +10,15 @@ module.exports.addToCart = async (req, res) => {
     try {
         let userCart = await Cart.findOne({ userId });
 
-
         // If cart does not exist, create one
         if (!userCart) {
-            userCart = new Cart({ userId, items: [] });
+            userCart = new Cart({ userId, items: []});
+            console.log(userCart);
         }
 
         const menuItem = await MenuItem.findById(menuItemId).select('price');
+
+        console.log(menuItem);
 
         if (!menuItem) {
             return res.status(400).json({ message: 'Menu Item not found' });
@@ -25,8 +27,6 @@ module.exports.addToCart = async (req, res) => {
         // Check if item already exists in cart
         const itemIndex = userCart.items.findIndex(item => item.menuItemId.toString() === menuItemId);
 
-        //console.log(itemIndex);
-
         if (itemIndex === -1) {
             // Item not in cart, add new item
             userCart.items.push({
@@ -34,6 +34,7 @@ module.exports.addToCart = async (req, res) => {
                 quantity: quantity,
                 price: menuItem.price
             });
+            console.log(userCart);
         } else {
             // Item exists, update quantity
             userCart.items[itemIndex].quantity += quantity;
@@ -68,16 +69,16 @@ module.exports.updateCart = async(req, res) => {
     const existingItem = userCart.items.find(item => item.menuItemId.equals(menuItemId));
 
     if (existingItem) {
-      existingItem.quantity = Math.max(1, Number(quantity)); // ✅ Avoid zero/negative quantities
+      existingItem.quantity = Math.max(1, Number(quantity)); //  Avoid zero/negative quantities
     } else {
       userCart.items.push({
         menuItemId,
         quantity: Math.max(1, Number(quantity)),
-        price: menuItem.price // ✅ Store price at checkout
+        price: menuItem.price //  Store price at checkout
       });
     }
 
-    const updatedCart = await userCart.save(); // ✅ Trigger pre('save')
+    const updatedCart = await userCart.save(); // Trigger pre('save')
 
     res.status(200).json(updatedCart);
   } catch (error) {

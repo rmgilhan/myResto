@@ -24,14 +24,17 @@ const cartSchema = new Schema({
         },
         total: {
             type: Number,
-            required: true
+            default: 0
+        },
+        isOrder: {
+            type: Boolean,
+            default: true
         }
     }]
 }, { timestamps: true });
 
 cartSchema.pre("save", async function (next) {
-  console.log("🟢 Running pre('save') hook...");
-
+  
   try {
     const menuItemIds = this.items.map(item => item.menuItemId);
     const menuItems = await mongoose.model("MenuItem").find({ _id: { $in: menuItemIds } });
@@ -47,10 +50,10 @@ cartSchema.pre("save", async function (next) {
       }
 
       if (!item.price) {
-        item.price = menuItem.price; // ✅ Store initial price if missing
+        item.price = menuItem.price; //  Store initial price if missing
       }
 
-      item.total = item.price * item.quantity; // ✅ Always update total
+      item.total = item.price * item.quantity; //  Always update total
     });
 
     next();
