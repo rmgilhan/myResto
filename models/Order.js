@@ -2,65 +2,51 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-// Define the Order schema
-const orderSchema = new Schema({
-    orderOn: {
-        type: Date,
-        default: Date.now
-    },
-    customerId: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-        index: true
-    },
-    MenusOrdered: [{
-        menuId: {
-            type: Schema.Types.ObjectId,
-            required: true,
-            ref: 'MenuItem'
-        },
-        quantity: {
+const OrderSchema = new mongoose.Schema({
+    customer: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User' }, // Reference to User
+    orderItems: [{  
+        menuItem: { 
+            type: mongoose.Schema.Types.ObjectId, 
+            ref: 'MenuItem', 
+            required: true 
+        }, // Reference to MenuItem
+        quantity: { 
+            type: Number, 
+            required: true, 
+            min: 1 
+        }, // Quantity of the item
+        price: { 
+            type: Number, 
+            required: true 
+        }, // Price at time of order (in case it changes later)
+        total: {
             type: Number,
-            required: [true, 'Quantity is required']
-        },
-        subTotal: {
-            type: Number,
-            required: [true, 'Sub Total is required']
+            default: 0
         }
     }],
-    totalAmount: {
-        type: Number,
-        required: [true, 'Total Amount is required']
-    },
-    orderType: {
-        type: String,
-        enum: ['Dine-In', 'Take-Out', 'Delivery'],
-        default: 'Dine-In'
-    },
-    status: {
-        type: String,
-        enum: ['Pending', 'Preparing', 'Ready', 'Completed', 'Cancelled'],
-        default: 'Pending'
-    },
-    paymentDetails: {
-        method: {
-            type: String,
-            enum: ['Cash', 'Card', 'Online'],
-            default: 'Cash'
-        },
-        transactionId: {
-            type: String,
-            default: null
-        }
-    }
-}, {
-    timestamps: true // Automatically adds createdAt and updatedAt
-});
+    totalAmount: { 
+        type: Number, 
+        required: true 
+    }, // Total amount of the order
+    payment: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Payment',
+        default : '[]' 
+    }, // Optional Payment reference
+    status: { 
+        type: String, 
+        enum: ['Pending', 'Preparing', 'Completed', 'Cancelled'], 
+        default: 'Pending' 
+    } // Order status
+}, { timestamps: true });
+
+const Order = mongoose.model("Order", OrderSchema);
 
 // Pre-save middleware for calculating totalAmount
 orderSchema.pre('save', function (next) {
-    this.totalAmount = this.MenusOrdered.reduce((total, item) => total + item.subTotal, 0);
+    this.totalAmount = this.orderItems.reduce((total, item) => total + item.price, 0);
     next();
 });
 

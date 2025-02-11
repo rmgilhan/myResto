@@ -21,7 +21,8 @@ module.exports.createAccessToken = (user) => {
 		roles : user.roles
 	};
 
-	return jwt.sign(data, secret, { expiresIn: '1h' });
+	//return jwt.sign(data, secret, { expiresIn: '1h' });
+	return jwt.sign(data, secret);
 };
 
 //[SECTION] Token Verification

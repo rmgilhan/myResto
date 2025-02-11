@@ -11,7 +11,7 @@ const userRoutes = require('./routes/user');
 const menuRoutes = require('./routes/menu');
 const restaurantRoutes = require('./routes/restaurant');
 
-// const cartRoutes = require('./routes/cart')
+const cartRoutes = require('./routes/cart');
 // const orderRoutes = require('./routes/order')
 
 
@@ -36,7 +36,7 @@ mongoose.connection.once('open', () => console.log('Now connected to MongoDB Atl
 app.use("/resto/users",  userRoutes);
 app.use("/resto/menus", menuRoutes);
 app.use("/resto/restoBuild", restaurantRoutes);
-// app.use("/b3/cart", cartRoutes)
+app.use("/resto/cart", cartRoutes);
 // app.use("/b3/order", orderRoutes)
 
 

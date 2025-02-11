@@ -145,7 +145,7 @@ const menuList = await Menu.find({ restaurant: resto._id }) // Get all menus for
   .select("name description -_id")
   .populate({
     path: "items",
-    select: "name price description -_id"
+    select: "_id name price description"
   })
   .lean();
 

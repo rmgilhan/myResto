@@ -2,25 +2,25 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const paymentSchema = new Schema({
-    orderId: {
+    order: {
         type: Schema.Types.ObjectId,
         ref: 'Order',
         required: [true, 'Order ID is required'],
         index: true // Optimizes queries by orderId
     },
-    paymentDate: {
+    date: {
         type: Date,
         default: Date.now
     },
-    paymentAmount: {
+    amount: {
         type: Number,
         required: [true, 'Payment amount is required'],
         min: [0, 'Payment amount must be positive']
     },
-    paymentMethod: {
+    method : {
         type: String,
         required: [true, 'Payment method is required'],
-        enum: ['Credit Card', 'Cash', 'PayPal', 'Bank Transfer'], // Expand methods as needed
+        enum: ['Credit Card', 'Cash', 'PayPal', 'GCash'], // Expand methods as needed
         default: 'Cash'
     },
     transactionId: {
@@ -28,7 +28,7 @@ const paymentSchema = new Schema({
         default: null, // Optional field for external payment system tracking
         unique: true // Ensures transaction IDs are not duplicated
     },
-    paymentStatus: {
+    status: {
         type: String,
         enum: ['Pending', 'Completed', 'Failed'],
         default: 'Pending'
