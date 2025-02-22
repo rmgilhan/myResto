@@ -12,8 +12,8 @@ const menuRoutes = require('./routes/menu');
 const restaurantRoutes = require('./routes/restaurant');
 
 const cartRoutes = require('./routes/cart');
-const orderRoutes = require('./routes/order')
-
+const orderRoutes = require('./routes/order');
+const reservationRoutes = require('./routes/reservation');
 
 const app = express();
 const port = 4005;
@@ -38,8 +38,7 @@ app.use("/resto/menus", menuRoutes);
 app.use("/resto/restoBuild", restaurantRoutes);
 app.use("/resto/cart", cartRoutes);
 app.use("/resto/order", orderRoutes)
-
-
+app.use("/resto/reservation", reservationRoutes)
 
 
 //"process.env.PORT || port" will use the environment variable if it is available OR will used port 4000 if none defined

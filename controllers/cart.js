@@ -13,12 +13,9 @@ module.exports.addToCart = async (req, res) => {
         // If cart does not exist, create one
         if (!userCart) {
             userCart = new Cart({ userId, items: []});
-            console.log(userCart);
         }
 
         const menuItem = await MenuItem.findById(menuItemId).select('price');
-
-        console.log(menuItem);
 
         if (!menuItem) {
             return res.status(400).json({ message: 'Menu Item not found' });
@@ -34,7 +31,6 @@ module.exports.addToCart = async (req, res) => {
                 quantity: quantity,
                 price: menuItem.price
             });
-            console.log(userCart);
         } else {
             // Item exists, update quantity
             userCart.items[itemIndex].quantity += quantity;
@@ -43,10 +39,8 @@ module.exports.addToCart = async (req, res) => {
         const savedUserCart = await userCart.save();
 
         if (savedUserCart){
-        	console.log("Save at database.")
             return res.status(201).json({ message: "Successfully added to cart", cart: savedUserCart });
         } else{ 
-        	console.log("Unable to save.")
         	return res.status(400).json({error: error.message});
         }
     } catch (error) {
@@ -54,7 +48,7 @@ module.exports.addToCart = async (req, res) => {
     }
 };
 
-module.exports.updateCart = async(req, res) => {
+module.exports.updateQuantityCart = async(req, res) => {
 
   try {
     const { menuItemId, quantity } = req.body;

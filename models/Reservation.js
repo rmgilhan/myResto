@@ -9,18 +9,22 @@ const reservationSchema = new Schema({
     },
     customer: {
         type: Schema.Types.ObjectId,
-        ref: 'Customer', // Reference to Customer
+        ref: 'User', // Reference to Customer
         required: true
     },
-    reservationDate: {
-        type: Date,
+    reservationDate: { 
+        type: Date, 
+        required: true 
+    },
+    reservationTime: {
+        type: String,
         required: true,
-        validate: {
-            validator: function (value) {
-                return value >= new Date();
-            },
-            message: 'Reservation date must be in the future'
-        }
+    validate: {
+        validator: function (v) {
+            return /^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/.test(v);
+        },
+        message: (props) => `${props.value} is not a valid time format (HH:MM:SS).`,
+        },
     },
     numberOfGuests: {
         type: Number,
@@ -31,6 +35,15 @@ const reservationSchema = new Schema({
         type: String,
         enum: ['Pending', 'Confirmed', 'Cancelled'], // Reservation status
         default: 'Pending'
+    },
+    approvedBy: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true //Default is the Customer during Pending
+    },
+    remarks: {
+        type: String,
+        default : 'reserve me not'
     },
     specialRequests: {
         type: [String], // Allow multiple requests

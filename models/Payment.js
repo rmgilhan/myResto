@@ -22,7 +22,7 @@ const paymentSchema = new Schema({
     transactionId: {
         type: String,
         default: null, // Optional field for external payment system tracking
-        unique: true // Ensures transaction IDs are not duplicated
+        sparse: true
     },
     status: {
         type: String,

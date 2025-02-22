@@ -7,7 +7,7 @@ const router = express.Router();
 router.post("/addToCart", verify, verifyRole(['Customer']),cartController.addToCart);
 
 //[PATCH] update Cart
-router.patch("/updateCart", verify, verifyRole(['Customer']),cartController.updateCart);
+router.patch("/updateQuantityCart", verify, verifyRole(['Customer']),cartController.updateQuantityCart);
 
 //[GET] List the user Cart
 router.get("/getCart", verify, verifyRole(['Customer']),cartController.getCart);

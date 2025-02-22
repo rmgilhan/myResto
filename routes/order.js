@@ -8,6 +8,6 @@ router.post("/checkout",verify, verifyRole(['Customer']), orderController.checko
 //[GET] Order List
 router.get("/orderList",verify, verifyRole(['Customer']), orderController.getOrder);
 //[PATCH] Order update
-router.patch("/updateOrder",verify, verifyRole(['Customer']), orderController.updateOrder);
+router.patch("/updateOrder",verify, verifyRole(['Customer']), orderController.updateStatusOrder);
 
 module.exports = router;
