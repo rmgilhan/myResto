@@ -8,7 +8,7 @@ module.exports.addMenu = async (req, res) => {
     if (!req.user.isAdmin) return res.status(403).json({ message: "Unauthorized." });
 
     const resto = await Restaurant.findOne().select('_id').lean();
-    const { menuName, name, description, price } = req.body;
+    const { menuName, menuDescription, name, description, price } = req.body;
 
     if (!name || typeof name !== "string" || name.trim() === "") {
         return res.status(400).json({ error: "Invalid name for the menu item." });
@@ -26,7 +26,7 @@ module.exports.addMenu = async (req, res) => {
           const newMenu = new Menu({ 
               restaurant : resto._id,
               name: menuName, 
-              description: "Auto-created category", 
+              description: menuDescription, 
               items: [] 
           });
 
@@ -143,7 +143,7 @@ module.exports.getMenuItem = async(req, res) => {
       .select("name description -_id")
       .populate({
         path: "items",
-        select: "_id name price description"
+        select: "_id name price description image"
       })
       .lean();
 

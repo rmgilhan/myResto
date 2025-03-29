@@ -84,7 +84,14 @@ module.exports.updateQuantityCart = async(req, res) => {
 
 module.exports.getCart = async(req,res) => {
 
-	const userCart = await Cart.findOne({userId : req.user.id});
+	const userCart = await Cart.findOne({ userId: req.user.id })
+    .populate({
+        path: "items.menuItemId",  
+        select: "name description image", 
+    })
+    .select("items quantity price total _id");
+
+
 	try {
 		if (!userCart) {
 			return res.status(400).json({message: "User has not yet menu selected. Try to select our delicious menus!"});

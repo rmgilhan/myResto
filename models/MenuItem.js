@@ -20,7 +20,7 @@ const menuItemSchema = new Schema({
     },
     category: {
         type: String,
-        enum: ['Appetizer', 'Main Course', 'Dessert', 'Beverage'], // Expand as needed
+        enum: ['Family Meals (Good for 3-5 people)', 'Solo Meals', 'Rice Meals', 'Appetizers','Soup & Salad','Noodles & Pasta','Grilled Specials','Seafood Delights','Beverages','Desserts'], // Expand as needed
         required: true
     },
     isAvailable: {
