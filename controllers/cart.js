@@ -48,39 +48,47 @@ module.exports.addToCart = async (req, res) => {
     }
 };
 
-module.exports.updateQuantityCart = async(req, res) => {
-
+module.exports.updateQuantityCart = async (req, res) => {
+  
+  const userId = req.user.id;
   try {
     const { menuItemId, quantity } = req.body;
 
-    const userCart = await Cart.findOne({ user: req.user._id });
+    // Convert menuItemId to ObjectId
+    const menuItemObjectId = new mongoose.Types.ObjectId(menuItemId);
+
+    // Find the user's cart
+    const userCart = await Cart.findOne({ userId });
 
     if (!userCart) return res.status(404).json({ message: "Cart not found" });
 
-    const menuItem = await MenuItem.findById(menuItemId);
+    // Check if the menuItem exists
+    const menuItem = await MenuItem.findById(menuItemObjectId);
     if (!menuItem) return res.status(400).json({ message: "Menu item not found" });
 
-    const existingItem = userCart.items.find(item => item.menuItemId.equals(menuItemId));
+    // Find and update the quantity
+    
+    const updatedCart = await Cart.findOneAndUpdate(
+      { userId: new mongoose.Types.ObjectId(req.user.id), "items.menuItemId": menuItemObjectId },
+      {
+        $set: {
+          "items.$.quantity": Math.max(1, Number(quantity)), // Ensure quantity is at least 1
+          "items.$.total": menuItem.price * Math.max(1, Number(quantity)), // Update total price
+        },
+      },
+      { new: true } // Return the updated document
+    );
 
-    if (existingItem) {
-      existingItem.quantity = Math.max(1, Number(quantity)); //  Avoid zero/negative quantities
-    } else {
-      userCart.items.push({
-        menuItemId,
-        quantity: Math.max(1, Number(quantity)),
-        price: menuItem.price //  Store price at checkout
-      });
+    if (!updatedCart) {
+      return res.status(404).json({ message: "Item not found in cart" });
     }
 
-    const updatedCart = await userCart.save(); // Trigger pre('save')
-
-    res.status(200).json(updatedCart);
+    res.status(200).json({ message: "Success", updatedCart });
   } catch (error) {
     console.error("Error updating cart:", error);
     res.status(500).json({ message: "Failed to update cart", error: error.message });
   }
-
-}
+};
 
 module.exports.getCart = async(req,res) => {
 
@@ -89,12 +97,12 @@ module.exports.getCart = async(req,res) => {
         path: "items.menuItemId",  
         select: "name description image", 
     })
-    .select("items quantity price total _id");
+    .select("items quantity price total _id userId");
 
 
 	try {
 		if (!userCart) {
-			return res.status(400).json({message: "User has not yet menu selected. Try to select our delicious menus!"});
+			return res.status(400).json({message: "Your cart is empty."});
 		} else {
 			return res.status(201).json({message: "Customer selected menus", userCart});
 		}
@@ -128,7 +136,7 @@ module.exports.deleteToCart = async (req, res) => {
       { new: true }
     );
 
-    return res.status(200).json({ message: "Menu successfully removed from cart.", updatedCart });
+    return res.status(200).json({ message: "MenuItem removed.", updatedCart });
 
   } catch (error) {
     return res.status(500).json({ error: error.message });
