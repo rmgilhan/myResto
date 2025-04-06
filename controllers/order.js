@@ -3,6 +3,7 @@ const Order = require("../models/Order");
 const Cart = require("../models/Cart");
 const Payment = require("../models/Payment");
 const User = require("../models/User");
+const Reservation = require("../models/Reservation");
 
 module.exports.checkoutOrder = async (req, res) => {
   const session = await mongoose.startSession();
@@ -62,7 +63,8 @@ module.exports.checkoutOrder = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    return res.status(201).json({ message: "Order placed successfully.", order: savedOrder });
+    return res.status(201).json({ message: "Success", order: savedOrder });
+
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
@@ -132,16 +134,30 @@ module.exports.checkoutOrder = async (req, res) => {
 //   }
 // };
 
-module.exports.getOrder = async(req, res) => {
+module.exports.getOrder = async (req, res) => {
 
-	const orderList = await Order.findOne({customer: req.user.id });
+    const orderId = Number(req.params.orderId);
 
-	if (!orderList) {
-		return res.status(404).json({message: "There is no active order for the customer."});
-	}
+    try {
+        let orders = await Order.find({ customer: req.user.id });
+        let reservations = await Reservation.find({ customer: req.user.id });
 
-	return res.status(201).json({message: 'Customer Order', orderList});
-} 
+        // Ensure orderList always contains an array
+        let orderList = { orderItems: orders.length ? orders : [] };
+
+        // Determine message
+        let msg = orders.length === 0 ? "There is no active order for the customer." : "Customer Orders";
+
+        // Return data based on orderId
+        if (orderId === 1) {
+            return res.status(200).json({ message: msg, orderList });
+        }
+        return res.status(200).json({ message: msg, orderList, reservations });
+
+    } catch (error) {
+        return res.status(500).json({ message: "Error retrieving orders.", error: error.message });
+    }
+};
 
 module.exports.updateStatusOrder = async (req, res) => {
   
@@ -201,7 +217,7 @@ module.exports.payOrder = async (req, res) => {
   let paymentOrder;
 
   try {
-    // ✅ Find customer's pending/preparing order
+    // Find customer's pending/preparing order
     const order = await Order.findOne({
       customer: req.user.id,
       status: { $in: ["Pending", "Preparing"] }
@@ -211,7 +227,7 @@ module.exports.payOrder = async (req, res) => {
       return res.status(400).json({ message: "Unable to find customer order." });
     }
 
-    // ✅ Update Payment Status
+    // Update Payment Status
     const paymentUpdateData = paymentMethod !== "Cash" 
       ? { status: "Completed", method: paymentMethod, transactionId: refId }
       : { status: "Completed" };
@@ -226,7 +242,7 @@ module.exports.payOrder = async (req, res) => {
       return res.status(400).json({ message: "Failed to process payment. Try again!" });
     }
 
-    // ✅ Update Order Status to "Completed"
+    // Update Order Status to "Completed"
     const updateOrder = await Order.findOneAndUpdate(
       { _id: order._id },
       { $set: { status: "Completed" } },

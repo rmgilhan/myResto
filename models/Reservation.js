@@ -12,19 +12,9 @@ const reservationSchema = new Schema({
         ref: 'User', // Reference to Customer
         required: true
     },
-    reservationDate: { 
+    reservationDateAndTime: { 
         type: Date, 
         required: true 
-    },
-    reservationTime: {
-        type: String,
-        required: true,
-    validate: {
-        validator: function (v) {
-            return /^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/.test(v);
-        },
-        message: (props) => `${props.value} is not a valid time format (HH:MM:SS).`,
-        },
     },
     numberOfGuests: {
         type: Number,
@@ -46,8 +36,8 @@ const reservationSchema = new Schema({
         default : 'reserve me not'
     },
     specialRequests: {
-        type: [String], // Allow multiple requests
-        default: []
+        type: String, // Allow multiple requests
+        default: ''
     }
 }, { timestamps: true });
 

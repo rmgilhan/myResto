@@ -90,26 +90,26 @@ module.exports.updateQuantityCart = async (req, res) => {
   }
 };
 
-module.exports.getCart = async(req,res) => {
+module.exports.getCart = async (req, res) => {
+    try {
+        let userCart = await Cart.findOne({ userId: req.user.id })
+            .populate({
+                path: "items.menuItemId",
+                select: "name description image",
+            })
+            .select("items quantity price total _id userId");
 
-	const userCart = await Cart.findOne({ userId: req.user.id })
-    .populate({
-        path: "items.menuItemId",  
-        select: "name description image", 
-    })
-    .select("items quantity price total _id userId");
+        if (!userCart) {
+            return res.status(200).json({ message: "Your cart is empty.", userCart: { items: [] } });
+        }
 
+        return res.status(200).json({ message: "Customer selected menus", userCart });
 
-	try {
-		if (!userCart) {
-			return res.status(400).json({message: "Your cart is empty."});
-		} else {
-			return res.status(201).json({message: "Customer selected menus", userCart});
-		}
-	} catch (error) {
-		return res.status(500).json({error: error.message});
-	}
-}
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+};
+
 
 module.exports.deleteToCart = async (req, res) => {
   const { menuItemId } = req.params;

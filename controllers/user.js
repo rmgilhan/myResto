@@ -140,10 +140,10 @@ module.exports.updatePassword = async (req, res) => {
     const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
     if (!isPasswordValid) return res.status(401).json({ message: "Current password is incorrect." });
 
-    user.password = await bcrypt.hash(newPassword, 10);
+    user.password = newPassword;
     await user.save();
 
-    return res.status(200).json({ message: "Password updated successfully." });
+    return res.status(200).json({ message: "Success" });
   } catch (error) {
     return res.status(500).json({ message: "Internal server error." });
   }

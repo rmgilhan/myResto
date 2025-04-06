@@ -16,7 +16,7 @@ module.exports.createReservation = async (req, res) => {
             return res.status(400).json({ message: 'No restaurant found.' });
         }
 
-     const { reservationDate, reservationTime, numberOfGuests, specialRequests } = req.body;
+     const { reservationDate, numberOfGuests, specialRequests } = req.body;
 
     // Validate Date and Time
     const today = new Date();
@@ -30,14 +30,15 @@ module.exports.createReservation = async (req, res) => {
 
 
     // Validate Time Format (HH:MM:SS)
-    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/;
-    if (!timeRegex.test(reservationTime)) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ message: "Invalid time format. Use HH:MM:SS (24-hour format)." });
-    }
+    // const timeRegex = /^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/;
+    // if (!timeRegex.test(reservationTime)) {
+    //   await session.abortTransaction();
+    //   session.endSession();
+    //   return res.status(400).json({ message: "Invalid time format. Use HH:MM:SS (24-hour format)." });
+    // }
 
-    const checkDate = await Reservation.findOne({reservationDate: reserveDate, reservationTime: reservationTime});
+    //const checkDate = await Reservation.findOne({reservationDate: reserveDate, reservationTime: reservationTime});
+    const checkDate = await Reservation.findOne({reservationDateAndTime: reserveDate});
     
     if (checkDate){
 	  await session.abortTransaction();
@@ -49,8 +50,8 @@ module.exports.createReservation = async (req, res) => {
     const createReserve = new Reservation({
       restaurant: restaurant._id,
       customer: req.user.id,
-      reservationDate: reserveDate,
-      reservationTime: reservationTime, // Store time as a String
+      reservationDateAndTime: reserveDate,
+      //reservationTime: reservationTime, // Store time as a String
       numberOfGuests: numberOfGuests,
       specialRequests: specialRequests,
       approvedBy : req.user.id
@@ -80,7 +81,7 @@ module.exports.createReservation = async (req, res) => {
         await session.commitTransaction();
         session.endSession();
 
-        return res.status(201).json({ message: 'Reservation successfully created.' });
+        return res.status(201).json({ message: 'Success' });
 
     } catch (error) {
         await session.abortTransaction();
@@ -151,22 +152,34 @@ module.exports.getReservation = async (req, res) => {
 
     // Step 3: Fetch reservations for today or later
     const listReservation = await Reservation.find({
-      reservationDate: { $gte: today } // Include today's reservations
+      reservationDateAndTime: { $gte: today } // Include today's reservations
     })
       .populate({
         path: "customer",
         select: "firstName lastName mobileNo -_id" // Fixed comma issue
       })
-      .select("reservationDate reservationTime numberOfGuests status _id")
+      .select("reservationDateAndTime numberOfGuests status _id")
       .lean();
 
     if (!listReservation.length) {
       return res.status(404).json({ message: "No reservations found." });
     }
 
+    const formattedReservations = listReservation.map(res => ({
+      ...res,
+      reservationDateAndTime: new Date(res.reservationDateAndTime).toLocaleString("en-PH", {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      }).replace(',', '') // Remove comma between date and time
+    }));
+
     return res.status(200).json({
       restaurantData,
-      listReservation
+      formattedReservations
     });
 
   } catch (error) {
