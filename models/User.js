@@ -53,6 +53,10 @@ const userSchema = new Schema({
             message: 'Employee position can only be assigned to non-customers'
         }
     },
+    address: {
+        type: Schema.Types.ObjectId,
+        ref: 'Address'
+    },
     orders: [{
         type: Schema.Types.ObjectId,
         ref: 'Order'

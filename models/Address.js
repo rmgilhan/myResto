@@ -25,7 +25,7 @@ const addressSchema = new Schema({
   country: {
     type: String,
     required: [true, 'Country is required'],
-    default: 'USA'
+    default: 'Philippines'
   }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields

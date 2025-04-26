@@ -24,4 +24,7 @@ router.patch('/update-password', verify, userController.updatePassword);
 // [PUT] Update user profile (requires authentication)
 router.put('/profile', verify, userController.updateProfile);
 
+//[POST] add user address as delivery address.
+router.post('/address', verify, userController.userAddress);
+
 module.exports = router; // Export the router

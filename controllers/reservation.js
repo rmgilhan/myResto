@@ -121,7 +121,7 @@ module.exports.updateReservation = async (req, res) => {
 
     await session.commitTransaction();
 
-    return res.status(201).json({ message: "Reservation successfully changed status", reservation: reservationUpdate });
+    return res.status(201).json({ message: "Success", reservation: reservationUpdate });
 
   } catch (error) {
     await session.abortTransaction();

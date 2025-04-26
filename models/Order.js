@@ -40,17 +40,60 @@ const orderSchema = new mongoose.Schema({
         enum: ['Pending', 'Preparing', 'Completed', 'Cancelled'], 
         default: 'Pending' 
     }, // Order status
-    isArchive : {
+    isArchive: {
         type: Boolean,
         default: false
+    },
+    completedAt: {
+        type: Date,
+        default: null
+    },
+    cancelledAt: {
+        type: Date,
+        default: null
     }
 }, { timestamps: true });
 
 // Pre-save middleware for calculating totalAmount
 orderSchema.pre('save', function (next) {
-    this.totalAmount = this.orderItems.reduce((total, item) => total + item.price, 0);
-    next();
+  // Calculate totalAmount
+  this.totalAmount = this.orderItems.reduce((total, item) => total + item.total, 0);
+
+  // If status is changing to Completed or Cancelled, set timestamp
+  if (this.isModified('status')) {
+    if (this.status === 'Completed' && !this.completedAt) {
+      this.completedAt = new Date();
+    }
+    if (this.status === 'Cancelled' && !this.cancelledAt) {
+      this.cancelledAt = new Date();
+    }
+  }
+
+  next();
 });
+
+
+orderSchema.post('save', function (doc, next) {
+  const now = new Date();
+
+  if (!doc.isArchive && (doc.status === 'Completed' || doc.status === 'Cancelled')) {
+    const baseDate = doc.status === 'Completed' ? doc.completedAt : doc.cancelledAt;
+
+    if (baseDate) {
+      const twoDaysLater = new Date(baseDate);
+      twoDaysLater.setDate(twoDaysLater.getDate() + 2);
+
+      if (now >= twoDaysLater) {
+        doc.isArchive = true;
+        doc.save().then(() => next()).catch(next);
+        return;
+      }
+    }
+  }
+
+  next();
+});
+
 
 // Create the Order model from the schema
 const Order = mongoose.model('Order', orderSchema);

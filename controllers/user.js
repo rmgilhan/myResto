@@ -1,6 +1,8 @@
+const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const Joi = require("joi");
 const User = require("../models/User");
+const Address = require("../models/Address");
 const Restaurant = require("../models/Restaurant");
 const auth = require("../auth");
 
@@ -49,7 +51,8 @@ module.exports.registerUser = async (req, res) => {
           password, 
           restaurant: null, 
           roles: ['Admin'],  // Use array for roles
-          isAdmin: true 
+          isAdmin: true,
+          address: null 
       });
     } else {
       newUser = new User({ 
@@ -58,7 +61,8 @@ module.exports.registerUser = async (req, res) => {
           email, 
           mobileNo, 
           password, 
-          restaurant: restaurant._id // Assign only the ID
+          restaurant: restaurant._id, // Assign only the ID
+          address: null
       });
     }
     // Create and save user
@@ -98,7 +102,13 @@ module.exports.loginUser = async (req, res) => {
 // Get User Profile
 module.exports.getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById(req.user.id)
+        .select("-password")
+        .populate({
+          path: "address",
+          select: "street city stateOrProvince postalCode country -_id"
+        })
+        .lean();
     if (!user) return res.status(404).json({ error: "User not found." });
 
     return res.status(200).json({ user });
@@ -163,16 +173,78 @@ module.exports.getAllUsers = async (req, res) => {
 module.exports.updateProfile = async (req, res) => {
   try {
     const { firstName, lastName, mobileNo } = req.body;
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user.id,
-      { firstName, lastName, mobileNo },
-      { new: true, runValidators: true }
-    ).select("-password");
 
-    if (!updatedUser) return res.status(404).json({ message: "User not found." });
+    const user = await User.findById(req.user.id);
+
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    // Set missing address field to null if it doesn't exist
+    if (typeof user.address === "undefined") {
+      user.address = null;
+    }
+
+    // Update fields
+    user.firstName = firstName;
+    user.lastName = lastName;
+    user.mobileNo = mobileNo;
+
+    await user.save();
+
+    const updatedUser = await User.findById(req.user.id).select("-password");
 
     return res.status(200).json({ message: "Profile updated successfully.", user: updatedUser });
+
   } catch (error) {
+    console.error("Update error:", error);
     return res.status(500).json({ message: "Failed to update profile." });
+  }
+};
+
+
+module.exports.userAddress = async (req, res) => {
+  
+  const { street, city, stateOrProvince, postalCode } = req.body;
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const user = await User.findOne({ _id: req.user.id});
+
+    if (!user) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: "User already has an address." });
+    }
+
+    const newAddress = new Address({ street, city, stateOrProvince, postalCode });
+    const saveAddress = await newAddress.save({ session });
+
+    if (!saveAddress) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: "Unable to save address." });
+    }
+
+    const userAddress = await User.findOneAndUpdate(
+      { _id: req.user.id },
+      { $set: { address: saveAddress._id } },
+      { new: true, session }
+    );
+
+    if (!userAddress) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: "Unable to update user address." });
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+    return res.status(201).json({ message: "Success" });
+
+  } catch (error) {
+    console.error("Unable to add address:", error);
+    await session.abortTransaction();
+    session.endSession();
+    return res.status(500).json({ message: "Unable to save user address. Try again!" });
   }
 };

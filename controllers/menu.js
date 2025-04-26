@@ -83,11 +83,12 @@ module.exports.updateMenuItem = async (req, res) => {
     );
 
     if (!updatedItem) {
-      throw new Error("Menu item not found.");
+      //throw new Error("Menu item not found.");
+      return res.status(400).json({ message: "Menu Item is not found."});
     }
 
 
-    return res.status(200).json({ message: "Menu item updated successfully", item: updatedItem });
+    return res.status(200).json({ message: "Success", item: updatedItem });
 
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -140,12 +141,14 @@ module.exports.getMenuItem = async(req, res) => {
 
     // Step 2: Fetch the menu and related items
     const menuList = await Menu.find({ restaurant: resto._id }) // Get all menus for this restaurant
-      .select("name description -_id")
-      .populate({
-        path: "items",
-        select: "_id name price description image"
-      })
-      .lean();
+        .select("name description -_id")
+        .populate({
+          path: "items",
+          //match: { isAvailable: true }, // only include available items
+          select: "_id name price description image category isAvailable"
+        })
+        .lean();
+
 
 
       if (!menuList){

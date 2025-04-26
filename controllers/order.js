@@ -134,12 +134,52 @@ module.exports.checkoutOrder = async (req, res) => {
 //   }
 // };
 
+module.exports.getAllOrders = async (req, res) => {
+  try {
+    const allOrders = await Order.find({ isArchive: false })
+      .populate({
+        path: "customer",
+        select: "firstName lastName -_id"
+      })
+      .populate({
+        path: "orderItems.menuItemId",
+        select: "name"
+      });
+
+    const reservations = await Reservation.find({});
+
+    const responseData = {
+      orderList: allOrders || [], // always return array
+      reservations: reservations || [],
+      customerMsg: allOrders.length > 0
+        ? "Customers Order"
+        : "There is no active order from the Customers.",
+      reservationMsg: reservations.length > 0
+        ? "Customer's Reservation"
+        : "There are no active Customer's reservation."
+    };
+
+    return res.status(200).json(responseData);
+  } catch (error) {
+    return res.status(500).json({
+      message: "Error retrieving orders.",
+      error: error.message
+    });
+  }
+};
+
+
 module.exports.getOrder = async (req, res) => {
 
     const orderId = Number(req.params.orderId);
 
     try {
-        let orders = await Order.find({ customer: req.user.id });
+        let orders = await Order.find({ customer: req.user.id })
+              .select({})
+              .populate({
+                path: "orderItems.menuItemId",
+                select: "name"
+              });
         let reservations = await Reservation.find({ customer: req.user.id });
 
         // Ensure orderList always contains an array
@@ -162,10 +202,11 @@ module.exports.getOrder = async (req, res) => {
 module.exports.updateStatusOrder = async (req, res) => {
   
   let { status } = req.body;
+  const {orderId} = req.params;
 
   try {
 
-  	const statusOrder = await Order.findOne({customer: req.user.id, status: status});
+  	const statusOrder = await Order.findOne({_id: orderId, status: status});
 
   	if (statusOrder) {
   		return res.status(201).json({message: 'Order is already in ' + status + ' status.'});
@@ -173,12 +214,12 @@ module.exports.updateStatusOrder = async (req, res) => {
 
     // Update Order Status
     const orderUpdate = await Order.findOneAndUpdate(
-      { customer: req.user.id, status: { $in: ["Pending", "Preparing","Cancelled", "Completed"] } }, // Simplified OR condition
+      { _id: orderId, status: { $in: ["Pending", "Preparing","Cancelled", "Completed"] } }, // Simplified OR condition
       { $set: { status } },
       { new: true }
     );
 
-    console.log(status, req.user.id);
+    // console.log(status, req.user.id);
 
     if (!orderUpdate) {
       return res.status(404).json({ message: "Failed to update the order status." });
@@ -201,11 +242,11 @@ module.exports.updateStatusOrder = async (req, res) => {
         return res.status(400).json({ error: "Failed to update payment status." });
       }
 
-      return res.status(200).json({ message: "Successfully updated order and payment status.", order: orderUpdate, payment: paymentUpdate });
+      // return res.status(200).json({ message: "Successfully updated order and payment status.", order: orderUpdate, payment: paymentUpdate });
     }
 
     // If status is "Preparing", just return success
-    return res.status(200).json({ message: "Order successfully updated to Preparing status.", order: orderUpdate });
+    return res.status(200).json({ message: "Success", order: orderUpdate });
 
   } catch (error) {
     return res.status(500).json({ message: "Failed to update", error: error.message });
