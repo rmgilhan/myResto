@@ -234,12 +234,12 @@ module.exports.userAddress = async (req, res) => {
     if (!userAddress) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(400).json({ message: "Unable to update user address." });
+      return res.status(400).json({ message: "Unable to update user address."});
     }
 
     await session.commitTransaction();
     session.endSession();
-    return res.status(201).json({ message: "Success" });
+    return res.status(201).json({ message: "Success", saveAddress });
 
   } catch (error) {
     console.error("Unable to add address:", error);
