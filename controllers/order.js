@@ -200,58 +200,46 @@ module.exports.getOrder = async (req, res) => {
 };
 
 module.exports.updateStatusOrder = async (req, res) => {
-  
   let { status } = req.body;
-  const {orderId} = req.params;
+  const { orderId } = req.params;
 
   try {
+    const order = await Order.findById(orderId);
 
-  	const statusOrder = await Order.findOne({_id: orderId, status: status});
-
-  	if (statusOrder) {
-  		return res.status(201).json({message: 'Order is already in ' + status + ' status.'});
-  	}
-
-    // Update Order Status
-    const orderUpdate = await Order.findOneAndUpdate(
-      { _id: orderId, status: { $in: ["Pending", "Preparing","Cancelled", "Completed"] } }, // Simplified OR condition
-      { $set: { status } },
-      { new: true }
-    );
-
-    // console.log(status, req.user.id);
-
-    if (!orderUpdate) {
-      return res.status(404).json({ message: "Failed to update the order status." });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found." });
     }
 
-    // Convert "Cancelled" to "Fail"
-    if (status === "Cancelled") {
-      status = "Fail";
+    if (order.status === status) {
+      return res.status(201).json({ message: `Order is already in ${status} status.` });
     }
 
-    // Update Payment Status if order status is NOT "Preparing"
+    // Update status and save (triggers pre/post save hooks)
+    order.status = status;
+    await order.save(); // This triggers your pre('save') and post('save') hooks
+
+    // If status is Cancelled, convert to Fail for payment
+    const paymentStatus = status === "Cancelled" ? "Fail" : status;
+
     if (status !== "Preparing") {
       const paymentUpdate = await Payment.findOneAndUpdate(
-        { order: orderUpdate._id },
-        { status },
+        { order: order._id },
+        { status: paymentStatus },
         { new: true }
       );
 
       if (!paymentUpdate) {
         return res.status(400).json({ error: "Failed to update payment status." });
       }
-
-      // return res.status(200).json({ message: "Successfully updated order and payment status.", order: orderUpdate, payment: paymentUpdate });
     }
 
-    // If status is "Preparing", just return success
-    return res.status(200).json({ message: "Success", order: orderUpdate });
+    return res.status(200).json({ message: "Success", order });
 
   } catch (error) {
     return res.status(500).json({ message: "Failed to update", error: error.message });
   }
 };
+
 
 module.exports.payOrder = async (req, res) => {
   const { paymentMethod, refId } = req.body;
