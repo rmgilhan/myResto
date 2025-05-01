@@ -14,6 +14,11 @@ const cartRoutes = require('./routes/cart');
 const orderRoutes = require('./routes/order');
 const reservationRoutes = require('./routes/reservation');
 
+//Cron Job scripts
+// require('./jobs/archiveOldOrders'); // Load the cron job
+// require('./jobs/deleteOldCarts');
+// require('./jobs/deleteExpiredReservations');
+
 const app = express();
 const port = process.env.PORT || 4005;
 

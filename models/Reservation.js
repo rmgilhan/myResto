@@ -41,5 +41,13 @@ const reservationSchema = new Schema({
     }
 }, { timestamps: true });
 
+reservationSchema.pre('save', function (next) {
+  if (this.isModified('status')) {
+    if (this.status === 'Completed' && !this.completedAt) this.completedAt = new Date();
+    if (this.status === 'Cancelled' && !this.cancelledAt) this.cancelledAt = new Date();
+  }
+  next();
+});
+
 const Reservation = mongoose.model('Reservation', reservationSchema);
 module.exports = Reservation;
