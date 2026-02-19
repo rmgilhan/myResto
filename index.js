@@ -4,6 +4,10 @@ const session = require('express-session');
 const cors = require('cors');
 const dotenv = require('dotenv');
 
+//Graphql
+const { graphqlHTTP } = require('express-graphql');
+const graphqlSchema = require('./graphql/schema');
+
 // Load environment variables
 dotenv.config();
 
@@ -31,6 +35,12 @@ app.use(session({
 	secret: process.env.SESSION_SECRET || "/auth",
 	resave: false,
 	saveUninitialized: false
+}));
+
+//Graphql inclusion 
+app.use('/resto/graphql', graphqlHTTP({
+  schema: graphqlSchema,
+  graphiql: true, // Enable browser IDE
 }));
 
 // Check if MONGODB_URI is available
